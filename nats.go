@@ -4,6 +4,8 @@ elect based on raft algorithm
 package leaderelection
 
 import (
+	"os"
+	"strings"
 	"time"
 
 	"github.com/nats-io/graft"
@@ -19,7 +21,9 @@ type NatsLE struct {
 func NewNatsLE(name string, size int) (*NatsLE, error) {
 	ci := graft.ClusterInfo{Name: name, Size: size}
 	do := nats.GetDefaultOptions()
-
+	if quorum := os.Getenv(NATS_QUORUM); quorum != "" {
+		do.Servers = strings.Split(quorum, ",")
+	}
 	rpc, err := graft.NewNatsRpc(&do)
 	if err != nil {
 		Log("error creating new NatsRaftLE: %v", err)
