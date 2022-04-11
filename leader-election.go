@@ -4,6 +4,7 @@ import "fmt"
 
 type LE interface {
 	AmILeader() bool
+	CleanResource() //defer in main
 }
 
 type Base string
