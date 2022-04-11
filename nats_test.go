@@ -12,11 +12,10 @@ func TestNatsRaftLE(t *testing.T) {
 	}
 	//start nats server first
 	//docker run -p 4222:4222 -ti nats:latest
-	size := 3
-	name := "test1"
+	opts := LeOpts{Name: "test1", Size: 3}
 	nodes := []LE{}
 	for i := 0; i < 3; i++ {
-		node, err := NewNatsLE(name, size)
+		node, err := NewNatsLE(opts)
 		assert.NoError(t, err)
 		nodes = append(nodes, node)
 	}

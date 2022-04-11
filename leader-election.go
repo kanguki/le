@@ -14,15 +14,16 @@ const (
 )
 
 type LeOpts struct {
-	Base Base
-	Name string
-	Size int
+	Base                Base
+	Name                string
+	Size                int
+	TimeoutDecideLeader int //default 30
 }
 
 func NewLE(opts LeOpts) (LE, error) {
 	switch opts.Base {
 	case NATS:
-		return NewNatsLE(opts.Name, opts.Size)
+		return NewNatsLE(opts)
 	default:
 		err := fmt.Sprintf("error creating new leaderElector: unsupported base: %v", opts.Base)
 		return nil, fmt.Errorf(err)

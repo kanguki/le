@@ -14,13 +14,14 @@ import (
 )
 
 type NatsLE struct {
-	Node *graft.Node
-	Size int    //number of nodes in cluster
-	Name string //name of the election
+	Node                *graft.Node
+	Size                int    //number of nodes in cluster
+	Name                string //name of the election
+	TimeoutDecideLeader int    //default 30
 }
 
-func NewNatsLE(name string, size int) (*NatsLE, error) {
-	ci := graft.ClusterInfo{Name: name, Size: size}
+func NewNatsLE(opts LeOpts) (*NatsLE, error) {
+	ci := graft.ClusterInfo{Name: opts.Name, Size: opts.Size}
 	do := nats.GetDefaultOptions()
 	if quorum := os.Getenv(NATS_QUORUM); quorum != "" {
 		do.Servers = strings.Split(quorum, ",")
@@ -49,20 +50,36 @@ func NewNatsLE(name string, size int) (*NatsLE, error) {
 			}
 		}
 	}()
-
-	return &NatsLE{Node: node, Size: size, Name: name}, nil
+	timeout := 30
+	if opts.TimeoutDecideLeader != 0 {
+		timeout = opts.TimeoutDecideLeader
+	}
+	return &NatsLE{Node: node, Size: opts.Size, Name: opts.Name, TimeoutDecideLeader: timeout}, nil
 }
 
 func (n *NatsLE) AmILeader() bool {
 	noLeader := func() bool {
 		return n.Node.State() != graft.LEADER && n.Node.Leader() == ""
 	}
-	waitCount := 0
-	for noLeader() && waitCount < 30 { //if it takes too
-		time.Sleep(1 * time.Second)
-		waitCount++
-		log.Debug("%v: 1 sec passed by without leader in cluster", n.Node.Id())
-		//TODO: integrate notification
+	stop := make(chan interface{}, 1)
+	go func() {
+		for {
+			select {
+			case <-time.After(time.Duration(n.TimeoutDecideLeader) * time.Second):
+				stop <- struct{}{}
+			}
+		}
+	}()
+L:
+	for noLeader() {
+		select {
+		case <-stop:
+			log.Debug("%v: %v sec passed by without leader in cluster", n.Node.Id(), n.TimeoutDecideLeader)
+			//TODO: integrate notification
+			break L
+		case <-time.After(time.Second):
+			log.Debug("%v: 1 sec passed by without leader in cluster", n.Node.Id())
+		}
 	}
 	return n.Node.State() == graft.LEADER
 }
