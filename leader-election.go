@@ -12,12 +12,18 @@ const (
 	NATS Base = "NATS"
 )
 
-func NewLE(base Base, name string, size int) (LE, error) {
-	switch base {
+type LeOpts struct {
+	Base Base
+	Name string
+	Size int
+}
+
+func NewLE(opts LeOpts) (LE, error) {
+	switch opts.Base {
 	case NATS:
-		return NewNatsLE(name, size)
+		return NewNatsLE(opts.Name, opts.Size)
 	default:
-		err := fmt.Sprintf("error creating new leaderElector: unsupported base: %v", base)
+		err := fmt.Sprintf("error creating new leaderElector: unsupported base: %v", opts.Base)
 		return nil, fmt.Errorf(err)
 	}
 }
