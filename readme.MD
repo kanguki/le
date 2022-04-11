@@ -15,7 +15,14 @@ envs are declared in [env.go](env.go)
 ##### Code:
 
 ```
-//
+//init
+le, err := leaderelection.NewLE(opts.LeOpts)
+if err != nil {
+	//do sth
+}
+if le.AmILeader() {
+	//do sth
+}
 ```
 
 # Run
