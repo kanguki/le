@@ -1,4 +1,4 @@
 #export VAR=
 
 rm -f log/* &&
-go run examples/main.go
+go run examples/main.go "$@"

@@ -55,15 +55,14 @@ func NewNatsLE(name string, size int) (*NatsLE, error) {
 
 func (n *NatsLE) AmILeader() bool {
 	noLeader := func() bool {
-		return n.Node.State() == graft.FOLLOWER && n.Node.Leader() == ""
+		return n.Node.State() != graft.LEADER && n.Node.Leader() == ""
 	}
 	waitCount := 0
 	for noLeader() && waitCount < 30 { //if it takes too
 		time.Sleep(1 * time.Second)
 		waitCount++
-		log.Debug("%v: 1 secs passed by without leader in cluster. wait for %v more", n.Node.Id(), waitCount)
+		log.Debug("%v: 1 sec passed by without leader in cluster", n.Node.Id())
 		//TODO: integrate notification
-		continue
 	}
 	return n.Node.State() == graft.LEADER
 }
